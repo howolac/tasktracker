@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tasktracker.mapper.TaskMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tasktracker.entity.Task">
+        <id column="task_id" property="taskId"/>
+        <result column="tasklist_id" property="tasklistId"/>
+        <result column="task_name" property="taskName"/>
+        <result column="task_deadline" property="taskDeadline"/>
+        <result column="task_necessity" property="taskNecessity"/>
+        <result column="task_status" property="taskStatus"/>
+        <result column="task_create" property="taskCreate"/>
+        <result column="task_modified" property="taskModified"/>
+        <result column="task_start" property="taskStart"/>
+        <result column="task_end" property="taskEnd"/>
+        <result column="task_done" property="taskDone"/>
+    </resultMap>
+
+    <!-- 根据userId查找所有任务 -->
+    <select id="findTasksByUserId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        SELECT *
+        FROM task
+                 INNER JOIN tasklist ON task.tasklist_id = tasklist.tasklist_id
+        WHERE tasklist.user_id = #{userId}
+    </select>
+
+    <!-- 根据taskListId查找所有任务 ，未完成的会排在前面 ,接着按截止日期排序 -->
+    <select id="findTasksByTasklistId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        SELECT *
+        FROM task
+        WHERE tasklist_id = #{tasklistId}
+        ORDER BY task_status ASC, task_deadline ASC
+    </select>
+
+    <!-- 查询今天开始的任务并按照开始时间排序 -->
+    <select id="findTasksStartingTodayOrderedByStartTime" resultMap="BaseResultMap">
+        SELECT task.*
+        FROM task
+                 INNER JOIN tasklist ON task.tasklist_id = tasklist.tasklist_id
+        WHERE DATE (task.task_start) = CURDATE()
+          AND tasklist.user_id = #{userId}
+        ORDER BY task.task_status ASC, task.task_start ASC
+    </select>
+
+    <!-- 查询今天截止的任务 -->
+    <select id="findTasksWithTodayDeadline" resultMap="BaseResultMap">
+        SELECT task.*
+        FROM task
+                 JOIN tasklist ON task.tasklist_id = tasklist.tasklist_id
+        WHERE DATE (task.task_deadline) = CURDATE()
+          AND tasklist.user_id = #{userId}
+        ORDER BY task.task_status ASC, task.task_deadline ASC
+    </select>
+
+    <!-- 新增任务 -->
+    <insert id="insertTask" parameterType="com.tasktracker.entity.Task">
+        INSERT INTO task (tasklist_id, task_name, task_deadline, task_necessity, task_status, task_create,
+                          task_modified, task_start, task_end)
+        VALUES (#{tasklistId}, #{taskName}, #{taskDeadline}, #{taskNecessity}, 0, NOW(), NOW(), #{taskStart},
+                #{taskEnd})
+    </insert>
+
+    <!-- 修改任务 -->
+    <update id="updateTask" parameterType="com.tasktracker.entity.Task">
+        UPDATE task
+        SET tasklist_id    = #{tasklistId},
+            task_name      = #{taskName},
+            task_deadline  = #{taskDeadline},
+            task_necessity = #{taskNecessity},
+            task_status    = #{taskStatus},
+            task_modified  = NOW(),
+            task_start     = #{taskStart},
+            task_end       = #{taskEnd},
+            task_done      =#{taskDone}
+        WHERE task_id = #{taskId}
+    </update>
+
+    <!-- 将指定tasklistId的所有任务的tasklistId设置为0 -->
+    <update id="resetTasklistIdForTasks" parameterType="java.lang.Integer">
+        UPDATE task
+        SET tasklist_id   = 0,
+            task_modified = NOW()
+        WHERE tasklist_id = #{tasklistId}
+    </update>
+
+    <!-- 统计指定用户ID今天完成的任务数量 -->
+    <select id="countTodayCompletedTasksByUserId" parameterType="java.lang.Integer" resultType="int">
+        SELECT COUNT(*)
+        FROM task
+                 INNER JOIN tasklist ON task.tasklist_id = tasklist.tasklist_id
+        WHERE tasklist.user_id = #{userId}
+          AND task_done = 1
+    </select>
+
+    <!-- 统计指定用户ID在今天开始的任务数量 -->
+    <select id="countTasksStartingTodayByUserId" parameterType="java.lang.Integer" resultType="int">
+        SELECT COUNT(*)
+        FROM task
+                 INNER JOIN tasklist ON task.tasklist_id = tasklist.tasklist_id
+        WHERE DATE(task.task_start) = CURDATE()
+          AND tasklist.user_id = #{userId}
+    </select>
+
+    <!-- 重新设定指定用户ID的任务状态为未完成 -->
+    <update id="resetCompletedTasksByUserId" parameterType="java.lang.Integer">
+        UPDATE task
+            INNER JOIN tasklist
+        ON task.tasklist_id = tasklist.tasklist_id
+            SET task_done = 0, task_modified = NOW()
+        WHERE tasklist.user_id = #{userId}
+    </update>
+</mapper>

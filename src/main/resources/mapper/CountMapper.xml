@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tasktracker.mapper.CountMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tasktracker.entity.Count">
+        <id column="count_id" property="countId"/>
+        <result column="user_id" property="userId"/>
+        <result column="count_task" property="countTask"/>
+        <result column="count_plan" property="countPlan"/>
+        <result column="count_plan_total" property="countPlanTotal"/>
+        <result column="count_task_total" property="countTaskTotal"/>
+        <result column="count_create" property="countCreate"/>
+        <result column="count_modified" property="countModified"/>
+    </resultMap>
+
+    <!-- 插入统计记录 -->
+    <insert id="insertCount" parameterType="com.tasktracker.entity.Count">
+        INSERT INTO count (user_id, count_task, count_plan, count_plan_total, count_task_total, count_create,
+                           count_modified)
+        VALUES (#{userId}, #{countTask}, #{countPlan}, #{countPlanTotal}, #{countTaskTotal}, NOW(), NOW())
+    </insert>
+
+    <!-- 查询这周内的所有数据 -->
+    <select id="selectThisWeekCounts" resultType="map">
+        SELECT count_plan              AS countPlan,
+               count_task              AS countTask,
+               count_plan_total        AS countPlanTotal,
+               count_task_total        AS countTaskTotal,
+               DAYOFWEEK(count_create) AS weekday
+        FROM count
+        WHERE user_id = #{userId}
+          AND YEARWEEK(count_create, 1) = YEARWEEK(CURDATE(), 1)
+        ORDER BY count_create ASC
+    </select>
+
+    <!-- 查询今年每个月的数据并汇总 -->
+    <select id="selectMonthlySummaryCounts" resultType="map">
+        SELECT
+            MONTH(count_create) AS month, SUM(count_task) AS sum_count_task, SUM(count_plan) AS sum_count_plan, SUM(count_plan_total) AS sum_count_plan_total, SUM(count_task_total) AS sum_count_task_total
+        FROM count
+        WHERE user_id = #{userId}
+          AND YEAR (count_create) = YEAR (CURDATE())
+        GROUP BY MONTH (count_create)
+    </select>
+
+    <!-- 删除今天的临时统计记录 -->
+    <delete id="removeTempCountToday" parameterType="java.lang.Integer">
+        DELETE
+        FROM count
+        WHERE user_id = #{userId}
+          AND DATE (count_create) = CURDATE()
+    </delete>
+
+</mapper>

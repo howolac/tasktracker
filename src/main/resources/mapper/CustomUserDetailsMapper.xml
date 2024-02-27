@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tasktracker.mapper.CustomUserDetailsMapper">
+
+    <!-- 更新后的CustomUserDetailsMap resultMap -->
+    <resultMap id="CustomUserDetailsMap" type="com.tasktracker.entity.CustomUserDetails">
+        <constructor>
+            <idArg column="user_id" javaType="java.lang.Integer"/>
+            <arg column="user_name" javaType="java.lang.String"/>
+            <arg column="user_password" javaType="java.lang.String"/>
+            <arg column="authorities" javaType="java.lang.String"/>
+            <arg column="user_status" javaType="Boolean"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 根据用户名加载 CustomUserDetails 的 select 语句 -->
+    <select id="loadUserByUsername" resultMap="CustomUserDetailsMap">
+        SELECT u.user_id,
+               u.user_name,
+               u.user_password,
+               u.user_status,
+--                逗号分隔
+               GROUP_CONCAT(r.role_name) AS authorities
+        FROM user u
+                 LEFT JOIN
+             user_roles ur ON u.user_id = ur.user_id
+                 LEFT JOIN
+             roles r ON ur.role_id = r.role_id
+        WHERE u.user_name = #{username}
+        GROUP BY u.user_id, u.user_name, u.user_password, u.user_status
+    </select>
+
+</mapper>

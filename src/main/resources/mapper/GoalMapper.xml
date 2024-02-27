@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tasktracker.mapper.GoalMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tasktracker.entity.Goal">
+        <id column="goal_id" property="goalId"/>
+        <result column="goal_title" property="goalTitle"/>
+        <result column="user_id" property="userId"/>
+        <result column="goal_content" property="goalContent"/>
+        <result column="goal_create" property="goalCreate"/>
+        <result column="goal_modified" property="goalModified"/>
+    </resultMap>
+
+    <!--    搜素-->
+    <select id="search" parameterType="map" resultMap="BaseResultMap">
+        SELECT * FROM goal
+        WHERE user_id = #{userId}
+        <if test="searchNameText != null and searchNameText != ''">
+            AND goal_title LIKE CONCAT('%', #{searchNameText}, '%')
+        </if>
+        <if test="searchContentText != null and searchContentText != ''">
+            AND goal_content LIKE CONCAT('%', #{searchContentText}, '%')
+        </if>
+    </select>
+
+
+    <!-- 新增目标 -->
+    <insert id="addGoal" parameterType="com.tasktracker.entity.Goal">
+        INSERT INTO goal (goal_title, goal_content, user_id, goal_create, goal_modified)
+        VALUES (#{goalTitle}, #{goalContent}, #{userId}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    </insert>
+
+    <!-- 更新目标 -->
+    <update id="updateGoal" parameterType="com.tasktracker.entity.Goal">
+        UPDATE goal
+        SET goal_title    = #{goalTitle},
+            goal_content  = #{goalContent},
+            goal_modified = CURRENT_TIMESTAMP
+        WHERE goal_id = #{goalId}
+    </update>
+
+    <!-- 删除目标 -->
+    <delete id="deleteGoal" parameterType="java.lang.Integer">
+        DELETE
+        FROM goal
+        WHERE goal_id = #{goalId}
+    </delete>
+</mapper>

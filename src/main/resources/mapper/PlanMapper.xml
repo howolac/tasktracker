@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tasktracker.mapper.PlanMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tasktracker.entity.Plan">
+        <id column="plan_id" property="planId"/>
+        <result column="user_id" property="userId"/>
+        <result column="plan_name" property="planName"/>
+        <result column="plan_last_perform" property="planLastPerform"/>
+        <result column="plan_create" property="planCreate"/>
+        <result column="plan_modified" property="planModified"/>
+        <result column="plan_status" property="planStatus"/>
+        <result column="plan_next_perform" property="planNextPerform"/>
+        <result column="plan_frequency" property="planFrequency"/>
+        <result column="plan_day_of_week" property="planDayOfWeek"/>
+        <result column="plan_month_day" property="planMonthDay"/>
+        <result column="plan_time" property="planTime"/>
+        <result column="executed_plans_count" property="executedPlansCount"/>
+        <result column="total_plans_count" property="totalPlansCount"/>
+    </resultMap>
+
+    <!-- 根据对象新增 -->
+    <insert id="insertPlan">
+        INSERT INTO plan(user_id,
+                         plan_name,
+                         plan_last_perform,
+                         plan_create,
+                         plan_modified,
+                         plan_status,
+                         plan_next_perform,
+                         plan_frequency,
+                         plan_day_of_week,
+                         plan_month_day,
+                         plan_time)
+        VALUES (#{userId},
+                #{planName},
+                #{planLastPerform},
+                NOW(),
+                NOW(),
+                #{planStatus},
+                #{planNextPerform},
+                #{planFrequency},
+                #{planDayOfWeek},
+                #{planMonthDay},
+                #{planTime})
+            )
+    </insert>
+
+    <!-- 根据对象修改 -->
+    <update id="update">
+        UPDATE plan
+        SET plan_name            = #{planName},
+            plan_last_perform    = #{planLastPerform},
+            plan_modified        = NOW(),
+            plan_status          = #{planStatus},
+            plan_next_perform    = #{planNextPerform},
+            plan_frequency       = #{planFrequency},
+            plan_day_of_week     = #{planDayOfWeek},
+            plan_month_day       = #{planMonthDay},
+            plan_time            = #{planTime},
+            plan_done            = #{planDone},
+            executed_plans_count = #{executedPlansCount},
+            total_plans_count    = #{totalPlansCount}
+        WHERE plan_id = #{planId}
+    </update>
+
+    <!-- 查询指定用户ID，状态为1且下次执行时间在现在今天之前的计划任务 -->
+    <select id="findAllWithStatusOneAndNextPerformBeforeToday" parameterType="int" resultMap="BaseResultMap">
+        SELECT *
+        FROM plan
+        WHERE plan_status = 1
+          AND user_id = #{userId}
+          AND DATE (plan_next_perform)
+         &lt; CURDATE()
+    </select>
+
+    <!-- 查询指定用户ID且下次执行时间为今天的计划任务 -->
+    <select id="findPlansForTodayByUserId" resultMap="BaseResultMap">
+        SELECT *
+        FROM plan
+        WHERE user_id = #{userId}
+          AND DATE (plan_next_perform) = CURDATE()
+        ORDER BY plan_next_perform ASC
+    </select>
+
+    <select id="findPlansByFrequencyAndName" parameterType="map" resultMap="BaseResultMap">
+        SELECT *
+        FROM plan
+        WHERE user_id = #{userId}
+          AND plan_frequency LIKE #{searchFrequencyText}
+          AND plan_name LIKE #{searchNameText}
+    </select>
+
+    <!--    统计执行时间为今天的、状态是已经完成的-->
+    <select id="countTodayCompletedPlansByUserId" parameterType="int" resultType="int">
+        SELECT COUNT(*)
+        FROM plan
+        WHERE user_id = #{userId}
+          AND plan_done = 1
+          AND DATE (plan_next_perform) = CURDATE()
+    </select>
+
+    <!-- 统计指定用户ID且下次执行时间为今天的计划任务数量 -->
+    <select id="countPlanNextPerformTodayByUserId" parameterType="int" resultType="int">
+        SELECT COUNT(*)
+        FROM plan
+        WHERE user_id = #{userId}
+          AND DATE (plan_next_perform) = CURDATE()
+    </select>
+
+    <update id="resetCompletedPlansByUserId" parameterType="int">
+        UPDATE plan
+        SET plan_done     = 0,
+            plan_modified = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+
+</mapper>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tasktracker.mapper.QuestionMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tasktracker.entity.Question">
+        <id column="ques_id" property="quesId"/>
+        <result column="ques_name" property="quesName"/>
+        <result column="user_id" property="userId"/>
+        <result column="ques_circumstances" property="quesCircumstances"/>
+        <result column="ques_expectation" property="quesExpectation"/>
+        <result column="ques_actuality" property="quesActuality"/>
+        <result column="ques_create" property="quesCreate"/>
+        <result column="ques_modified" property="quesModified"/>
+        <result column="ques_status" property="quesStatus"/>
+    </resultMap>
+
+    <!-- 查找问题记录 ,根据问题的解决状态排序-->
+    <select id="search" parameterType="map" resultMap="BaseResultMap">
+        SELECT *
+        FROM question
+        WHERE user_id = #{userId}
+        <if test="searchNameText != null and searchNameText.trim() != ''">
+            AND ques_name LIKE CONCAT('%', #{searchNameText}, '%')
+        </if>
+        <if test="searchCircumstancesText != null and searchCircumstancesText.trim() != ''">
+            AND ques_circumstances LIKE CONCAT('%', #{searchCircumstancesText}, '%')
+        </if>
+        ORDER BY ques_status ASC
+    </select>
+
+    <!-- 新增记录 -->
+    <insert id="insert" parameterType="com.tasktracker.entity.Question">
+        INSERT INTO question (ques_name,
+                              user_id,
+                              ques_circumstances,
+                              ques_expectation,
+                              ques_actuality,
+                              ques_create,
+                              ques_modified,
+                              ques_status)
+        VALUES (#{quesName},
+                #{userId},
+                #{quesCircumstances},
+                #{quesExpectation},
+                #{quesActuality},
+                NOW(),
+                NOW(),
+                #{quesStatus})
+    </insert>
+
+    <!-- 根据id删除一条记录 -->
+    <delete id="deleteById" parameterType="java.lang.Integer">
+        DELETE
+        FROM question
+        WHERE ques_id = #{questionId}
+    </delete>
+
+    <!-- 修改记录 -->
+    <update id="update" parameterType="com.tasktracker.entity.Question">
+        UPDATE question
+        SET ques_name          = #{quesName},
+            user_id            = #{userId},
+            ques_circumstances = #{quesCircumstances},
+            ques_expectation   = #{quesExpectation},
+            ques_actuality     = #{quesActuality},
+            ques_modified      = NOW(),
+            ques_status        = #{quesStatus}
+        WHERE ques_id = #{quesId}
+    </update>
+
+    <update id="toggleQuesStatusById" parameterType="java.lang.Integer">
+        UPDATE question
+        SET ques_status = (1 - ques_status)
+        WHERE ques_id = #{questionId}
+    </update>
+</mapper>

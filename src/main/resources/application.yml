@@ -1,0 +1,61 @@
+#端口
+server:
+  port: 8081
+
+# DataSource Config
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/tasktracker?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+  mail:
+    host: smtp.163.com # SMTP 服务器地址
+    username: q858103451@163.com # 登陆账号
+    password: xx # 登陆密码（或授权码）
+    port: 465
+    protocol: smtp
+    default-encoding: utf-8
+    properties:
+      mail:
+        mail.debug: true
+        smtp:
+          auth: true # 启用 SMTP 认证
+          starttls:
+            enable: true # 启用 STARTTLS 加密
+            required: true
+          ssl:
+            trust: smtp.163.com
+            enable: true
+          socketFactory:
+            port: 465
+            class: javax.net.ssl.SSLSocketFactory
+      from: q858103451@163.com # 邮件发信人（即真实邮箱地址）
+    servlet:
+      multipart:
+        max-file-size: 10MB # 限制单个文件大小
+        max-request-size: 50MB # 限制请求总量
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**Mapper.xml
+
+#jwt: data :这个路径是根据JWTUtil中的
+#@ConfigurationProperties("jwt.data")配置的
+jwt:
+  data:
+    #    jwt加密密钥
+    secret: jwt-token-secret
+    #    jwt储存的请求头Authorization固定写法
+    header: Authorization
+    #      jwt的过期时间(60s*60min*24h*7day)
+    expiration: 604800
+    #    jwt负载中拿到的头信息
+    tokenPrefix: Bearer
+    #
+#aliyun:
+#  accessKeyId: xx
+#  accessKeySecret: xx
+#  sms:
+#    signName: 阿里云短信测试
+#    templateCode: xx
+

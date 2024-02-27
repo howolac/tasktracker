@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tasktracker.mapper.FileMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tasktracker.entity.File">
+        <id column="file_id" property="fileId"/>
+        <result column="user_id" property="userId"/>
+        <result column="file_name" property="fileName"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="file_type" property="fileType"/>
+        <result column="file_path" property="filePath"/>
+        <result column="file_modified" property="fileModified"/>
+        <result column="file_create" property="fileCreate"/>
+    </resultMap>
+
+    <!-- 插入文件或文件夹 -->
+    <insert id="insertFile" parameterType="com.tasktracker.entity.File">
+        INSERT INTO files (user_id, file_name, file_size, file_type, file_path, file_modified, file_create)
+        VALUES (#{userId}, #{fileName}, #{fileSize}, #{fileType}, #{filePath}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    </insert>
+
+    <!-- 获取路径下的文件和文件夹列表 -->
+    <select id="listFilesByFilePath" resultMap="BaseResultMap">
+        SELECT *
+        FROM files
+        WHERE file_path = #{filePath}
+          AND user_id = #{userId}
+    </select>
+
+    <!-- 根据id查找文件记录 -->
+    <select id="findFileById" parameterType="int" resultMap="BaseResultMap">
+        SELECT *
+        FROM files
+        WHERE file_id = #{fileId}
+    </select>
+
+<!--    &lt;!&ndash; 更新文件信息 &ndash;&gt;-->
+<!--    <update id="updateFile" parameterType="com.tasktracker.entity.File">-->
+<!--        UPDATE files-->
+<!--        SET user_id       = #{userId},-->
+<!--            file_name     = #{fileName},-->
+<!--            file_size     = #{fileSize},-->
+<!--            file_type     = #{fileType},-->
+<!--            file_path     = #{filePath},-->
+<!--            file_modified = CURRENT_TIMESTAMP-->
+<!--        WHERE file_id = #{fileId}-->
+<!--    </update>-->
+
+    <!-- 删除文件记录 -->
+    <delete id="deleteFileById" parameterType="int">
+        DELETE FROM files WHERE file_id = #{fileId}
+    </delete>
+
+    <!--    删除空的文件夹-->
+    <delete id="deleteFolder" parameterType="int">
+        DELETE FROM files WHERE file_id = #{fileId};
+    </delete>
+
+    <!-- 新建文件夹 -->
+    <insert id="createFolder" parameterType="com.tasktracker.entity.File">
+        INSERT INTO files (user_id, file_name, file_type, file_path, file_create, file_modified)
+        VALUES (#{userId}, #{fileName}, 'folder', #{filePath}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    </insert>
+
+    <!-- 搜索特定用户的文件 -->
+    <select id="searchFiles" parameterType="map" resultMap="BaseResultMap">
+        SELECT *
+        FROM files
+        WHERE user_id = #{userId}
+        AND file_name LIKE CONCAT('%', #{searchText}, '%')
+        <if test="searchType != null and searchType != ''">
+            AND file_type = #{searchType}
+        </if>
+    </select>
+
+</mapper>

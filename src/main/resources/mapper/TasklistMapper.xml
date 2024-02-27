@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tasktracker.mapper.TasklistMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.tasktracker.entity.Tasklist">
+        <id column="tasklist_id" property="tasklistId" />
+        <result column="user_id" property="userId" />
+        <result column="tasklist_name" property="tasklistName" />
+        <result column="tasklist_note" property="tasklistNote" />
+        <result column="tasklist_create" property="tasklistCreate" jdbcType="TIMESTAMP" />
+        <result column="tasklist_modified" property="tasklistModified" jdbcType="TIMESTAMP" />
+    </resultMap>
+
+    <!-- 根据id删除任务列表 -->
+    <delete id="deleteTasklistById" parameterType="int">
+        DELETE FROM tasklist WHERE tasklist_id = #{tasklistId}
+    </delete>
+
+    <!-- 根据用户ID查找所有任务列表 -->
+    <select id="selectAllTasklistsByUserId" parameterType="int" resultMap="BaseResultMap">
+        SELECT * FROM tasklist WHERE user_id = #{userId}
+    </select>
+
+    <!-- 新增任务列表 -->
+    <insert id="insertTasklist" parameterType="com.tasktracker.entity.Tasklist" useGeneratedKeys="true" keyProperty="tasklistId">
+        INSERT INTO tasklist (user_id, tasklist_name, tasklist_note, tasklist_create, tasklist_modified)
+        VALUES (#{userId}, #{tasklistName}, #{tasklistNote}, NOW(), NOW())
+    </insert>
+
+    <!-- 修改任务列表 -->
+    <update id="updateTasklist" parameterType="com.tasktracker.entity.Tasklist">
+        UPDATE tasklist
+        SET user_id           = #{userId},
+            tasklist_name     = #{tasklistName},
+            tasklist_note=#{tasklistNote},
+            tasklist_modified = NOW()
+        WHERE tasklist_id = #{tasklistId}
+    </update>
+
+    <!-- 根据用户ID以及可选的任务列表名称或备注搜索任务列表 -->
+    <select id="searchTasklistsByOptionalText" parameterType="map" resultMap="BaseResultMap">
+        SELECT * FROM tasklist
+        WHERE user_id = #{userId}
+        <if test="searchNameText != null and searchNameText != ''">
+            AND tasklist_name LIKE CONCAT('%', #{searchNameText}, '%')
+        </if>
+        <if test="searchNoteText != null and searchNoteText != ''">
+            AND tasklist_note LIKE CONCAT('%', #{searchNoteText}, '%')
+        </if>
+    </select>
+</mapper>
